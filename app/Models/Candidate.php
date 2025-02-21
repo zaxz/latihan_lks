@@ -7,10 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Candidate extends Model
 {
     protected $fillable = [
-        'name', 'vision', 'mission', 'photo', 'vote_count'
+        'nama', 'visi', 'misi', 'foto', 'vote_count'
     ];
-    public function votes()
-    {
-        return $this->hasMany(Vote::class);
-    }
 }

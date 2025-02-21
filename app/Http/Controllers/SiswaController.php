@@ -2,63 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Auth;
+use Hash;
 use Illuminate\Http\Request;
 
 class SiswaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
-    {
-        //
+    { 
+        $siswas = User::where('role', 'siswa')->get();
+        if (request('search')) {
+            $siswas = User::where('nama','like','%'.request('search').'%')->orWhere('nis','like','%'.request('search').'%')->get();
+        }
+        return view('admin.siswa.index', compact('siswas'));
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('admin.siswa.create');
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
-    }
+        $request->validate([
+            'nis' => 'required|unique:users,nis',
+            'nama' => 'required',
+            'password' => 'required|min:7',
+        ]);
+        
+        User::create([
+            'nis' => $request->nis,
+            'nama' => $request->nama,
+            'password' => Hash::make($request->password),
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
+        return redirect()->route('index');
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit($id)
     {
-        //
+        $siswa = User::findOrFail($id);
+        return view('admin.siswa.edit', compact('siswa'));
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $siswa = User::findOrFail($id);
+        $validated = $request->validate([
+            'nis' => 'required|unique:users,nis,'.$siswa->id,
+            'nama' => 'required',
+            'password' => 'nullable|min:7',
+        ]);
+
+        $data = [
+            'nis' => $validated['nis'],
+            'nama' => $validated['nama'],
+        ];
+
+        if ($request->password) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+        
+        $siswa->update($data);
+        
+        return redirect()->route('siswa.index')->with('success', 'Berhasil mengedit siswa');
     }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $siswa = User::findOrFail($id);
+        $siswa->delete();
+        return redirect()->back()->with('success', 'Siswa berhasil dihapus');
     }
 }

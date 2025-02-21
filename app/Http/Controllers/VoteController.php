@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidate;
+use App\Models\User;
 use App\Models\Vote;
+use Auth;
 use Illuminate\Http\Request;
 
 class VoteController extends Controller
@@ -12,54 +15,29 @@ class VoteController extends Controller
      */
     public function index()
     {
-        //
+        if (Auth::user()->role == 'admin') {
+            $kandidats = Candidate::all();
+            return redirect()->route('index',compact('kandidats'))->with('errors','lu admin ngapain ngevote?');
+        } else{
+            if (Auth::user()->has_voted == 1) {
+                return redirect()->route('index')->with('errors', 'Lu udah ngevote ngapain ngevote lagi?');
+            }else{
+                $kandidats = Candidate::all();
+                return view('voting.index', compact('kandidats'));
+            }
+        }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function visimisi($id){
+        $visimisi = Candidate::findOrFail($id);
+        return view('voting.visimisi', compact('visimisi'));
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function vote(Request $request)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Vote $vote)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Vote $vote)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Vote $vote)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Vote $vote)
-    {
-        //
+        $kandidat_id = Candidate::findOrFail($request->kandidat_id);
+        $kandidat_id->increment('vote_count');
+        Auth::user()->update(['has_voted'=>true]);
+        
+        return redirect()->route('index')->with('success', 'Voting berhasil');
     }
 }

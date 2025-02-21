@@ -2,63 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Candidate;
+use App\Models\User;
 
 class PublicController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        return view("welcome");
-    }
+        $kandidats = Candidate::all();
+        $siswas = User::where('role', 'siswa')->get();
+        $udh_vote = User::where('has_voted', 1)->where('role', 'siswa')->get();
+        $blm_vote = User::where('has_voted', 0)->where('role', 'siswa')->get();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        $total_suara = $siswas->where('has_voted', true)->count();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        foreach ($kandidats as $kandidat) {
+            if ($total_suara>0) {
+                $kandidat->persentase = round(($kandidat->vote_count / $total_suara)*100,2);
+            } else{
+                $kandidat->persentase = 0;
+            }
+            // $kandidat->persentase = $total_suara > 0 ? round(($kandidat->vote_count/$total_suara  ) * 100, 2) : 0;
+        }
+        $persentaseUdh = round(($udh_vote->count()/$siswas->count())*100,2);
+        $persentaseBlm = round(($blm_vote->count()/$siswas->count())*100,2);
+        
+        return view("welcome", compact('kandidats','siswas','udh_vote','blm_vote','persentaseUdh','persentaseBlm'));
     }
 }
